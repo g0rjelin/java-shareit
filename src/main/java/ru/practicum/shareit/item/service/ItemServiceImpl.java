@@ -11,7 +11,7 @@ import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.utils.ServiceUtils;
 
 import java.util.Collection;
@@ -24,14 +24,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
     final ItemRepository itemRepository;
-    final UserService userService;
+    final UserRepository userRepository;
 
     static final String ITEM_NOT_FOUND_MSG = "Вещь с id = %d не найдена";
     static final String OWNER_NOT_FOUND_MSG = "Вещь с id = %d обновляется пользователем с id = %d, не являющимся владельцем";
+    static final String USER_NOT_FOUND_MSG = "Пользователь с id = %d не найден";
 
     @Override
     public Collection<ItemDto> findAllItemsByOwnerId(Long userId) {
-        userService.getUserById(userId);
+        getUserById(userId);
         return itemRepository.findAllItemsByOwnerId(userId).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toSet());
@@ -57,15 +58,13 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto create(Long userId, ItemDto newItemDto) {
-        User owner = userService.getUserById(userId);
-        Item newItem = ItemMapper.toItem(newItemDto);
-        newItem.setOwner(owner);
+        Item newItem = ItemMapper.toItem(newItemDto, getUserById(userId));
         return ItemMapper.toItemDto(itemRepository.create(newItem));
     }
 
     @Override
     public ItemDto update(Long userId, Long itemId, ItemDto updItem) {
-        User owner = userService.getUserById(userId);
+        User owner = getUserById(userId);
         Item oldItem = getItemById(itemId);
         if (!oldItem.getOwner().getId().equals(userId)) {
             throw new NotFoundException(String.format(OWNER_NOT_FOUND_MSG, itemId, userId));
@@ -75,4 +74,10 @@ public class ItemServiceImpl implements ItemService {
         oldItem.setAvailable(ServiceUtils.getDefaultIfNull(updItem.getAvailable(), oldItem.getAvailable()));
         return ItemMapper.toItemDto(itemRepository.update(oldItem));
     }
+
+    private User getUserById(Long userId) {
+        return userRepository.findUserById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
+    }
+
 }

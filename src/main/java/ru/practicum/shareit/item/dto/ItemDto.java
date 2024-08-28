@@ -1,7 +1,7 @@
 package ru.practicum.shareit.item.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -13,14 +13,12 @@ import lombok.experimental.FieldDefaults;
 @Builder
 public class ItemDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private final Long id;
+    final Long id;
+    @NotBlank
+    final String name;
+    @NotBlank
+    final String description;
     @NotNull
-    @NotEmpty
-    private final String name;
-    @NotNull
-    @NotEmpty
-    private final String description;
-    @NotNull
-    private final Boolean available;
-    private final Long request;
+    final Boolean available;
+    final Long request;
 }

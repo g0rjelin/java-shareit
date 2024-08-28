@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -29,25 +28,22 @@ public class UserController {
     final UserService userService;
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public UserDto findUserById(@PathVariable @Min(1) Long id) {
         return userService.findUserById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto create(@Valid @RequestBody User newUser) {
-        return userService.create(newUser);
+    public UserDto create(@Valid @RequestBody UserDto newUserDto) {
+        return userService.create(newUserDto);
     }
 
     @PatchMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public UserDto update(@RequestBody User updUser, @PathVariable @Min(1) Long id) {
-        return userService.update(id, updUser);
+    public UserDto update(@RequestBody UserDto updUserDto, @PathVariable @Min(1) Long id) {
+        return userService.update(id, updUserDto);
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable @Min(1) Long id) {
         userService.delete(id);
     }

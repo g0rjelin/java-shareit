@@ -7,12 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.UniqueConstraintException;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.validation.UserValidator;
 import ru.practicum.shareit.utils.ServiceUtils;
+
+import java.util.stream.Collectors;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
@@ -23,7 +25,6 @@ public class UserServiceImpl implements UserService {
 
     static final String USER_NOT_FOUND_MSG = "Пользователь с id = %d не найден";
     static final String DUPLICATE_EMAIL_ERROR = "Электронная почта %s уже используется";
-
 
     @Override
     public UserDto findUserById(Long id) {
@@ -37,19 +38,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto create(User newUser) {
-        UserValidator.validateFormat(newUser);
-        checkUniqueEmail(newUser.getId(), newUser.getEmail());
-        return UserMapper.toUserDto(userRepository.create(newUser));
+    public UserDto create(UserDto newUserDto) {
+        UserValidator.validateFormat(newUserDto);
+        checkUniqueEmail(newUserDto.getId(), newUserDto.getEmail());
+        return UserMapper.toUserDto(userRepository.create(UserMapper.toUser(newUserDto)));
     }
 
     @Override
-    public UserDto update(Long id, User updUser) {
+    public UserDto update(Long id, UserDto updUserDto) {
         User oldUser = getUserById(id);
-        UserValidator.validateFormat(updUser);
-        checkUniqueEmail(id, updUser.getEmail());
-        oldUser.setName(ServiceUtils.getDefaultIfNull(updUser.getName(), oldUser.getName()));
-        oldUser.setEmail(ServiceUtils.getDefaultIfNull(updUser.getEmail(), oldUser.getEmail()));
+        UserValidator.validateFormat(updUserDto);
+        checkUniqueEmail(id, updUserDto.getEmail());
+        oldUser.setName(ServiceUtils.getDefaultIfNull(updUserDto.getName(), oldUser.getName()));
+        oldUser.setEmail(ServiceUtils.getDefaultIfNull(updUserDto.getEmail(), oldUser.getEmail()));
         return UserMapper.toUserDto(userRepository.update(oldUser));
     }
 
@@ -60,9 +61,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void checkUniqueEmail(Long id, String email) {
-        if (userRepository.findAll().stream()
-                .filter(u -> !u.getId().equals(id))
-                .anyMatch(u -> u.getEmail().equals(email))) {
+        if (userRepository.findAll().stream().map(User::getEmail).collect(Collectors.toSet()).contains(email)) {
             throw new UniqueConstraintException(String.format(DUPLICATE_EMAIL_ERROR, email));
         }
     }

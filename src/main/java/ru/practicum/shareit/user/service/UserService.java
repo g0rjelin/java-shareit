@@ -8,9 +8,9 @@ public interface UserService {
 
     UserDto findUserById(Long id);
 
-    UserDto create(User newUser);
+    UserDto create(UserDto newUserDto);
 
-    UserDto update(Long id, User updUser);
+    UserDto update(Long id, UserDto updUserDto);
 
     void delete(Long id);
 

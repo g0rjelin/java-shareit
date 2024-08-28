@@ -1,7 +1,11 @@
 package ru.practicum.shareit.user.model;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -11,9 +15,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"email"})
 public class User {
-    private Long id;
-    @NotNull
-    private String name;
-    @NotNull
-    private String email;
+    Long id;
+    String name;
+    String email;
 }
