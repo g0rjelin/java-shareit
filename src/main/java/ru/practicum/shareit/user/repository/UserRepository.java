@@ -4,6 +4,7 @@ import ru.practicum.shareit.user.model.User;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserRepository {
 
@@ -16,4 +17,7 @@ public interface UserRepository {
     void delete(Long id);
 
     Optional<User> findUserById(Long id);
+
+    Set<String> getEmails();
+
 }

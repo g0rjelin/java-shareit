@@ -14,7 +14,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.validation.UserValidator;
 import ru.practicum.shareit.utils.ServiceUtils;
 
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto create(UserDto newUserDto) {
         UserValidator.validateFormat(newUserDto);
-        checkUniqueEmail(newUserDto.getId(), newUserDto.getEmail());
+        checkUniqueEmail(newUserDto.getEmail());
         return UserMapper.toUserDto(userRepository.create(UserMapper.toUser(newUserDto)));
     }
 
@@ -48,7 +48,9 @@ public class UserServiceImpl implements UserService {
     public UserDto update(Long id, UserDto updUserDto) {
         User oldUser = getUserById(id);
         UserValidator.validateFormat(updUserDto);
-        checkUniqueEmail(id, updUserDto.getEmail());
+        if (!Objects.isNull(updUserDto.getEmail()) && !updUserDto.getEmail().equals(oldUser.getEmail())) {
+            checkUniqueEmail(updUserDto.getEmail());
+        }
         oldUser.setName(ServiceUtils.getDefaultIfNull(updUserDto.getName(), oldUser.getName()));
         oldUser.setEmail(ServiceUtils.getDefaultIfNull(updUserDto.getEmail(), oldUser.getEmail()));
         return UserMapper.toUserDto(userRepository.update(oldUser));
@@ -56,12 +58,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(Long id) {
-        getUserById(id);
+        User delUser = getUserById(id);
+
         userRepository.delete(id);
     }
 
-    private void checkUniqueEmail(Long id, String email) {
-        if (userRepository.findAll().stream().map(User::getEmail).collect(Collectors.toSet()).contains(email)) {
+    private void checkUniqueEmail(String email) {
+        if (userRepository.getEmails().contains(email)) {
             throw new UniqueConstraintException(String.format(DUPLICATE_EMAIL_ERROR, email));
         }
     }

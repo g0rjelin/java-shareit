@@ -7,8 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.model.Item;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,11 +20,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ItemRepositoryImpl implements ItemRepository {
     final Map<Long, Item> items;
-    final Map<Long, Map<Long,Item>> itemsByOwner;
+    final Map<Long, List<Item>> itemsByOwner;
 
     @Override
     public Collection<Item> findAllItemsByOwnerId(Long id) {
-        return itemsByOwner.get(id).values();
+        return itemsByOwner.get(id);
     }
 
     @Override
@@ -43,7 +44,7 @@ public class ItemRepositoryImpl implements ItemRepository {
     public Item create(Item newItem) {
         newItem.setId(getNextId());
         items.put(newItem.getId(), newItem);
-        itemsByOwner.computeIfAbsent(newItem.getOwner().getId(), k -> new HashMap<>()).put(newItem.getId(), newItem);
+        itemsByOwner.computeIfAbsent(newItem.getOwner().getId(), k -> new ArrayList<>()).add(newItem);
         log.info("Вещь {} добавлена", newItem);
         return newItem;
     }
@@ -51,7 +52,6 @@ public class ItemRepositoryImpl implements ItemRepository {
     @Override
     public Item update(Item updItem) {
         items.put(updItem.getId(), updItem);
-        itemsByOwner.get(updItem.getOwner().getId()).put(updItem.getId(), updItem);
         log.info("Вещь {} обновлена", updItem);
         return updItem;
     }
