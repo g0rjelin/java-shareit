@@ -59,12 +59,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete(Long id) {
         User delUser = getUserById(id);
-
         userRepository.delete(id);
     }
 
     private void checkUniqueEmail(String email) {
-        if (userRepository.getEmails().contains(email)) {
+        if (userRepository.isEmailExists(email)) {
             throw new UniqueConstraintException(String.format(DUPLICATE_EMAIL_ERROR, email));
         }
     }

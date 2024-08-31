@@ -56,8 +56,8 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Set<String> getEmails() {
-        return emails;
+    public Boolean isEmailExists(String email) {
+        return emails.contains(email);
     }
 
     private long getNextId() {
