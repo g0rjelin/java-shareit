@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long userId) {
-        return userRepository.findUserById(userId)
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
     }
 
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     public UserDto create(UserDto newUserDto) {
         UserValidator.validateFormat(newUserDto);
         checkUniqueEmail(newUserDto.getEmail());
-        return UserMapper.toUserDto(userRepository.create(UserMapper.toUser(newUserDto)));
+        return UserMapper.toUserDto(userRepository.save(UserMapper.toUser(newUserDto)));
     }
 
     @Override
@@ -53,17 +53,17 @@ public class UserServiceImpl implements UserService {
         }
         oldUser.setName(ServiceUtils.getDefaultIfNull(updUserDto.getName(), oldUser.getName()));
         oldUser.setEmail(ServiceUtils.getDefaultIfNull(updUserDto.getEmail(), oldUser.getEmail()));
-        return UserMapper.toUserDto(userRepository.update(oldUser));
+        return UserMapper.toUserDto(userRepository.save(oldUser));
     }
 
     @Override
     public void delete(Long id) {
         User delUser = getUserById(id);
-        userRepository.delete(id);
+        userRepository.delete(delUser);
     }
 
     private void checkUniqueEmail(String email) {
-        if (userRepository.isEmailExists(email)) {
+        if (userRepository.findUserByEmail(email).isPresent()) {
             throw new UniqueConstraintException(String.format(DUPLICATE_EMAIL_ERROR, email));
         }
     }

@@ -1,24 +1,22 @@
-package ru.practicum.shareit.booking.dto;
+package ru.practicum.shareit.item.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.item.dto.ItemShortDto;
-import ru.practicum.shareit.user.dto.UserDto;
 
 import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @Builder
-public class BookingDto {
+public class CommentDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     final Long id;
-    final LocalDateTime start;
-    final LocalDateTime end;
-    final ItemShortDto item;
-    final UserDto booker;
-    final String status;
+    @NotBlank
+    final String text;
+    final String authorName;
+    final LocalDateTime created;
 }
