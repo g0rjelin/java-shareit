@@ -46,8 +46,8 @@ public class ItemServiceImpl implements ItemService {
     public Collection<ItemDto> findAllItemsByOwnerId(Long ownerId) {
         getUserById(ownerId);
         Collection<Item> items = itemRepository.findAllByOwnerId(ownerId);
-        Collection<Comment> comments = commentRepository.findAllByItemOwnerId(ownerId);
-        Collection<Booking> bookings = bookingRepository.findAllByItemOwnerId(ownerId);
+        Collection<Comment> comments = commentRepository.findByItem_Owner_Id(ownerId);
+        Collection<Booking> bookings = bookingRepository.findByItem_Owner_Id(ownerId);
         return ItemMapper.toItemOwnerDto(items, comments, bookings);
     }
 

@@ -37,8 +37,8 @@ create table if not exists bookings(
 create table if not exists "comments" (
     id bigint generated always as identity primary key,
     "text" varchar(1000) null,
-    item_id int8 null,
-    author_id int8 null,
+    item_id bigint null,
+    author_id bigint null,
     created timestamp null,
     constraint fk_comments_to_items foreign key (item_id) references public.items(id),
     constraint fk_comments_to_users foreign key (author_id) references public.users(id)
