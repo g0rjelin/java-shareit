@@ -32,12 +32,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
-    }
-
-    @Override
     public UserDto create(UserDto newUserDto) {
         UserValidator.validateFormat(newUserDto);
         checkUniqueEmail(newUserDto.getEmail());
@@ -60,6 +54,11 @@ public class UserServiceImpl implements UserService {
     public void delete(Long id) {
         User delUser = getUserById(id);
         userRepository.delete(delUser);
+    }
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
     }
 
     private void checkUniqueEmail(String email) {

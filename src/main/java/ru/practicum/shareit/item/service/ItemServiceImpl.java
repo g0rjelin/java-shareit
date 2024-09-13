@@ -59,12 +59,6 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Item getItemById(Long itemId) {
-        return itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format(ITEM_NOT_FOUND_MSG, itemId)));
-    }
-
-    @Override
     public Collection<ItemShortDto> searchItems(String text) {
         BooleanExpression containsNameOrDescription = QItem.item.name.containsIgnoreCase(text).or(QItem.item.description.containsIgnoreCase(text));
         BooleanExpression isAvailable = QItem.item.available.isTrue();
@@ -98,6 +92,11 @@ public class ItemServiceImpl implements ItemService {
             throw new BadRequestException(COMMENT_NOT_ALLOWED_MSG);
         }
         return CommentMapper.toCommentDto(commentRepository.save(CommentMapper.toComment(commentDto, author, item)));
+    }
+
+    private Item getItemById(Long itemId) {
+        return itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException(String.format(ITEM_NOT_FOUND_MSG, itemId)));
     }
 
     private User getUserById(Long userId) {

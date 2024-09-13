@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class BookingShortDto {
-    //@JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @FutureOrPresent
     @NotNull
     final LocalDateTime start;

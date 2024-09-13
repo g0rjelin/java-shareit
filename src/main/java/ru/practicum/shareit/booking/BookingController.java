@@ -21,6 +21,7 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.BadRequestParamException;
 
 import java.util.Collection;
 
@@ -38,13 +39,17 @@ public class BookingController {
     }
 
     @GetMapping
-    public Collection<BookingDto> findBookingsByState(@RequestHeader("X-Sharer-User-Id") Long bookerId, @RequestParam(defaultValue = "ALL") BookingState state) {
-        return bookingService.findBookingsByState(bookerId, state);
+    public Collection<BookingDto> findBookingsByState(@RequestHeader("X-Sharer-User-Id") Long bookerId, @RequestParam(defaultValue = "ALL") String state) {
+        BookingState bookingState = BookingState.from(state)
+                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));
+        return bookingService.findBookingsByState(bookerId, bookingState);
     }
 
     @GetMapping("/owner")
-    public Collection<BookingDto> findBookingsOwnerByState(@RequestHeader("X-Sharer-User-Id") Long ownerId, @RequestParam(defaultValue = "ALL") BookingState state) {
-        return bookingService.findBookingsOwnerByState(ownerId, state);
+    public Collection<BookingDto> findBookingsOwnerByState(@RequestHeader("X-Sharer-User-Id") Long ownerId, @RequestParam(defaultValue = "ALL") String state) {
+        BookingState bookingState = BookingState.from(state)
+                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));
+        return bookingService.findBookingsOwnerByState(ownerId, bookingState);
     }
 
     @PostMapping

@@ -5,11 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.NotAllowedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.UniqueConstraintException;
+import ru.practicum.shareit.exception.WrongDateIntervalException;
 
 @Slf4j
 @RestControllerAdvice
@@ -19,6 +19,13 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequest(final BadRequestException e) {
         log.error("Bad request error: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleWrongDateIntervalException(final WrongDateIntervalException e) {
+        log.error("Wrong date interval in booking: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
@@ -52,8 +59,8 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException e) {
-        log.error("MethodArgumentTypeMismatchException: {}", e.getMessage());
+    public ErrorResponse handleIllegalArgumentException(final IllegalArgumentException e) {
+        log.error("IllegalArgumentException: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 

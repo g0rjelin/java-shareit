@@ -35,7 +35,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "order by booking.start desc")
     Collection<Booking> findAllOwnerByState(Long ownerId, String state);
 
-    @Query("select case when count(*) = 1 then true else false end " +
+    @Query("select (count(*) = 1) " +
             "from Booking as b " +
             "where b.booker.id = ?1 " +
             "  and b.item.id = ?2 " +
@@ -43,15 +43,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "  and b.end <= CURRENT_TIMESTAMP")
     boolean existValidBooking(Long authorId, Long itemId);
 
-    @Query("select case" +
-            "        when count(*) != 0 " +
-            "          and coalesce( min(case when b.start >= ?1 then b.start end), ?1) < ?2 " +
-            "          and coalesce( max(case when b.end <= ?2 then b.end end), ?2) >= ?1" +
-            "        then true" +
-            "        else false" +
-            "    end as has_intersection " +
+    @Query("select (count(b) != 0) as has_intersection " +
             "from Booking as b " +
             "where b.item.id = ?3 " +
-            "and b.status != 'REJECTED'")
+            "  and b.status = 'APPROVED'" +
+            "  and b.start <= ?2 and b.end >= ?1")
     boolean existIntersectingBookingDatesForItem(LocalDateTime start, LocalDateTime end, Long itemId);
 }
