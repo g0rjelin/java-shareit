@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.UniqueConstraintException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
@@ -23,12 +22,11 @@ import java.util.Objects;
 public class UserServiceImpl implements UserService {
     final UserRepository userRepository;
 
-    static final String USER_NOT_FOUND_MSG = "Пользователь с id = %d не найден";
     static final String DUPLICATE_EMAIL_ERROR = "Электронная почта %s уже используется";
 
     @Override
     public UserDto findUserById(Long id) {
-        return UserMapper.toUserDto(getUserById(id));
+        return UserMapper.toUserDto(userRepository.getUserById(id));
     }
 
     @Override
@@ -40,7 +38,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(Long id, UserDto updUserDto) {
-        User oldUser = getUserById(id);
+        User oldUser = userRepository.getUserById(id);
         UserValidator.validateFormat(updUserDto);
         if (!Objects.isNull(updUserDto.getEmail()) && !updUserDto.getEmail().equals(oldUser.getEmail())) {
             checkUniqueEmail(updUserDto.getEmail());
@@ -52,13 +50,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(Long id) {
-        User delUser = getUserById(id);
+        User delUser = userRepository.getUserById(id);
         userRepository.delete(delUser);
-    }
-
-    private User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
     }
 
     private void checkUniqueEmail(String email) {

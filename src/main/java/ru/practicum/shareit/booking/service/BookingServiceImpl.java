@@ -19,7 +19,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.booking.validation.BookingValidation;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -33,8 +32,6 @@ public class BookingServiceImpl implements BookingService {
     final ItemRepository itemRepository;
     final BookingRepository bookingRepository;
 
-    static final String USER_NOT_FOUND_MSG = "Пользователь с id = %d не найден";
-    static final String ITEM_NOT_FOUND_MSG = "Вещь с id = %d не найдена";
     static final String ITEM_NOT_AVAILABLE_MSG = "Вещь с id = %d недоступна для бронирования";
     static final String BOOKING_NOT_FOUND_MSG = "Бронирование с id = %d не найдено";
     static final String NOT_ITEM_OWNER_MSG = "Вещь не принадлежит пользователю с id = %d";
@@ -47,7 +44,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto findBookingById(Long userId, Long bookingId) {
-        User user = getUserById(userId);
+        User user = userRepository.getUserById(userId);
         Booking booking = getBookingById(bookingId);
         if (!user.equals(booking.getBooker()) && !user.equals(booking.getItem().getOwner())) {
             throw new NotAllowedException(String.format(NOT_BOOKER_NOR_OWNER_MSG, userId));
@@ -70,9 +67,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto create(Long bookerId, BookingShortDto newBookingShortDto) {
-        User booker = getUserById(bookerId);
-        Item item = getItemById(newBookingShortDto.getItemId());
-        BookingValidation.validateBookingDate(newBookingShortDto);
+        User booker = userRepository.getUserById(bookerId);
+        Item item = itemRepository.getItemById(newBookingShortDto.getItemId());
         if (!item.getAvailable()) {
             throw new BadRequestException(String.format(ITEM_NOT_AVAILABLE_MSG, item.getId()));
         }
@@ -98,16 +94,6 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         return BookingMapper.toBookingDto(bookingRepository.save(booking));
-    }
-
-    private User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
-    }
-
-    private Item getItemById(Long itemId) {
-        return itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format(ITEM_NOT_FOUND_MSG, itemId)));
     }
 
     private Booking getBookingById(Long bookingId) {

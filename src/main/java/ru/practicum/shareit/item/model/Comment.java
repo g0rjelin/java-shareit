@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -44,5 +45,6 @@ public class Comment {
     @ToString.Exclude
     User author;
 
-    LocalDateTime created = LocalDateTime.now();
+    @CreationTimestamp
+    LocalDateTime created;
 }

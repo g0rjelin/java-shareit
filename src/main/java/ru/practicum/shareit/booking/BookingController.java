@@ -25,6 +25,8 @@ import ru.practicum.shareit.exception.BadRequestParamException;
 
 import java.util.Collection;
 
+import static ru.practicum.shareit.common.CommonConstants.X_SHARER_USER_ID;
+
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 @Validated
@@ -34,19 +36,19 @@ public class BookingController {
     final BookingService bookingService;
 
     @GetMapping("/{bookingId}")
-    public BookingDto findBookingById(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable @Min(1) Long bookingId) {
+    public BookingDto findBookingById(@RequestHeader(X_SHARER_USER_ID) Long userId, @PathVariable @Min(1) Long bookingId) {
         return bookingService.findBookingById(userId, bookingId);
     }
 
     @GetMapping
-    public Collection<BookingDto> findBookingsByState(@RequestHeader("X-Sharer-User-Id") Long bookerId, @RequestParam(defaultValue = "ALL") String state) {
+    public Collection<BookingDto> findBookingsByState(@RequestHeader(X_SHARER_USER_ID) Long bookerId, @RequestParam(defaultValue = "ALL") String state) {
         BookingState bookingState = BookingState.from(state)
                 .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));
         return bookingService.findBookingsByState(bookerId, bookingState);
     }
 
     @GetMapping("/owner")
-    public Collection<BookingDto> findBookingsOwnerByState(@RequestHeader("X-Sharer-User-Id") Long ownerId, @RequestParam(defaultValue = "ALL") String state) {
+    public Collection<BookingDto> findBookingsOwnerByState(@RequestHeader(X_SHARER_USER_ID) Long ownerId, @RequestParam(defaultValue = "ALL") String state) {
         BookingState bookingState = BookingState.from(state)
                 .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));
         return bookingService.findBookingsOwnerByState(ownerId, bookingState);
@@ -54,12 +56,12 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long bookerId, @Valid @RequestBody BookingShortDto newBookingShortDto) {
+    public BookingDto create(@RequestHeader(X_SHARER_USER_ID) Long bookerId, @Valid @RequestBody BookingShortDto newBookingShortDto) {
         return bookingService.create(bookerId, newBookingShortDto);
     }
 
     @PatchMapping("/{bookingId}")
-    public BookingDto update(@RequestHeader("X-Sharer-User-Id") Long ownerId, @PathVariable @Min(1) Long bookingId, @RequestParam Boolean approved) {
+    public BookingDto update(@RequestHeader(X_SHARER_USER_ID) Long ownerId, @PathVariable @Min(1) Long bookingId, @RequestParam Boolean approved) {
         return bookingService.update(ownerId, bookingId, approved);
     }
 

@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.mapper;
 
+import lombok.experimental.UtilityClass;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemShortDto;
@@ -12,8 +13,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+@UtilityClass
 public class ItemMapper {
     public static ItemShortDto toItemDto(Item item) {
         return ItemShortDto.builder()
@@ -46,20 +50,20 @@ public class ItemMapper {
 
     public static List<ItemDto> toItemOwnerDto(Iterable<Item> items, Collection<Comment> comments, Collection<Booking> bookings) {
         List<ItemDto> itemDtos = new ArrayList<>();
+        Map<Long, List<Comment>> commentsMap = comments.stream()
+                .collect(Collectors.groupingBy(c -> c.getItem().getId()));
+        Map<Long, List<Booking>> bookingsMap = bookings.stream()
+                .collect(Collectors.groupingBy(b -> b.getItem().getId()));
         for (Item item : items) {
-            Optional<LocalDateTime> lastBooking = bookings.stream()
-                    .filter(booking -> booking.getItem().getId().equals(item.getId()))
+            Optional<LocalDateTime> lastBooking = commentsMap.isEmpty() ? Optional.empty() : bookingsMap.get(item.getId()).stream()
                     .map(Booking::getEnd)
                     .filter(end -> end.isBefore(LocalDateTime.now()))
                     .max(Comparator.naturalOrder());
-            Optional<LocalDateTime> nextBooking = bookings.stream()
-                    .filter(booking -> booking.getItem().getId().equals(item.getId()))
+            Optional<LocalDateTime> nextBooking = bookingsMap.isEmpty() ? Optional.empty() : bookingsMap.get(item.getId()).stream()
                     .map(Booking::getStart)
                     .filter(start -> start.isAfter(LocalDateTime.now()))
                     .min(Comparator.naturalOrder());
-            Collection<Comment> itemComments = comments.stream()
-                    .filter(comment -> comment.getItem().getId().equals(item.getId()))
-                    .toList();
+            Collection<Comment> itemComments = commentsMap.get(item.getId());
             itemDtos.add(ItemDto.builder()
                     .id(item.getId())
                     .name(item.getName())
