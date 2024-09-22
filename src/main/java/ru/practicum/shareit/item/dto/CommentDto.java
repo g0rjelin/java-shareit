@@ -1,23 +1,20 @@
-package ru.practicum.shareit.user.dto;
+package ru.practicum.shareit.item.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @Builder
-public class UserDto {
+public class CommentDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     final Long id;
-    @NotBlank
-    @Size(min = 1, max = 100)
-    final String name;
-    @NotBlank
-    @Size(min = 1, max = 320)
-    final String email;
+    final String text;
+    final String authorName;
+    final LocalDateTime created;
 }

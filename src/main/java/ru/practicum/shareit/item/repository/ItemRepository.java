@@ -1,18 +1,21 @@
 package ru.practicum.shareit.item.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 
-public interface ItemRepository {
-    Collection<Item> findAllItemsByOwnerId(Long id);
+public interface ItemRepository extends JpaRepository<Item, Long>, QuerydslPredicateExecutor<Item> {
+    String ITEM_NOT_FOUND_MSG = "Вещь с id = %d не найдена";
 
-    Optional<Item> findItemById(Long id);
+    List<Item> findAllByOwnerId(Long ownerId);
 
-    Collection<Item> searchItems(String text);
+    boolean existsItemsByOwnerId(Long ownerId);
 
-    Item create(Item newItem);
-
-    Item update(Item updItem);
+    default Item getItemById(Long itemId) {
+        return findById(itemId)
+                .orElseThrow(() -> new NotFoundException(String.format(ITEM_NOT_FOUND_MSG, itemId)));
+    }
 }

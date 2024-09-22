@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.UniqueConstraintException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
@@ -23,47 +22,40 @@ import java.util.Objects;
 public class UserServiceImpl implements UserService {
     final UserRepository userRepository;
 
-    static final String USER_NOT_FOUND_MSG = "Пользователь с id = %d не найден";
     static final String DUPLICATE_EMAIL_ERROR = "Электронная почта %s уже используется";
 
     @Override
     public UserDto findUserById(Long id) {
-        return UserMapper.toUserDto(getUserById(id));
-    }
-
-    @Override
-    public User getUserById(Long userId) {
-        return userRepository.findUserById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_MSG, userId)));
+        return UserMapper.toUserDto(userRepository.getUserById(id));
     }
 
     @Override
     public UserDto create(UserDto newUserDto) {
         UserValidator.validateFormat(newUserDto);
         checkUniqueEmail(newUserDto.getEmail());
-        return UserMapper.toUserDto(userRepository.create(UserMapper.toUser(newUserDto)));
+        return UserMapper.toUserDto(userRepository.save(UserMapper.toUser(newUserDto)));
     }
 
     @Override
     public UserDto update(Long id, UserDto updUserDto) {
-        User oldUser = getUserById(id);
+        User oldUser = userRepository.getUserById(id);
         UserValidator.validateFormat(updUserDto);
         if (!Objects.isNull(updUserDto.getEmail()) && !updUserDto.getEmail().equals(oldUser.getEmail())) {
             checkUniqueEmail(updUserDto.getEmail());
         }
         oldUser.setName(ServiceUtils.getDefaultIfNull(updUserDto.getName(), oldUser.getName()));
         oldUser.setEmail(ServiceUtils.getDefaultIfNull(updUserDto.getEmail(), oldUser.getEmail()));
-        return UserMapper.toUserDto(userRepository.update(oldUser));
+        return UserMapper.toUserDto(userRepository.save(oldUser));
     }
 
     @Override
     public void delete(Long id) {
-        User delUser = getUserById(id);
-        userRepository.delete(id);
+        User delUser = userRepository.getUserById(id);
+        userRepository.delete(delUser);
     }
 
     private void checkUniqueEmail(String email) {
-        if (userRepository.isEmailExists(email)) {
+        if (userRepository.findUserByEmail(email).isPresent()) {
             throw new UniqueConstraintException(String.format(DUPLICATE_EMAIL_ERROR, email));
         }
     }

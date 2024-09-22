@@ -1,7 +1,9 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.booking.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,36 +18,39 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
+
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@NoArgsConstructor
+@Entity
+@Table(name = "bookings", schema = "public")
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 @ToString
 @Builder
-@Entity
-@Table(name = "items", schema = "public")
-public class Item {
+public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false)
-    String name;
+    @Column(name = "start_date")
+    LocalDateTime start;
 
-    String description;
-
-    @Column(name = "is_available", nullable = false)
-    Boolean available;
+    @Column(name = "end_date")
+    LocalDateTime end;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
-    User owner;
+    Item item;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
-    ItemRequest request;
+    User booker;
+
+    @Enumerated(EnumType.STRING)
+    BookingStatus status;
 }

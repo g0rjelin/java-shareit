@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -16,8 +15,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.request.ItemRequest;
+import org.hibernate.annotations.CreationTimestamp;
 import ru.practicum.shareit.user.model.User;
+
+import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -27,25 +28,23 @@ import ru.practicum.shareit.user.model.User;
 @ToString
 @Builder
 @Entity
-@Table(name = "items", schema = "public")
-public class Item {
+@Table(name = "comments", schema = "public")
+public class Comment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false)
-    String name;
-
-    String description;
-
-    @Column(name = "is_available", nullable = false)
-    Boolean available;
+    String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
-    User owner;
+    Item item;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
-    ItemRequest request;
+    User author;
+
+    @CreationTimestamp
+    LocalDateTime created;
 }
