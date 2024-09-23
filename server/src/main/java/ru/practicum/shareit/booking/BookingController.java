@@ -18,7 +18,6 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.exception.BadRequestParamException;
 
 import java.util.Collection;
 
@@ -41,9 +40,9 @@ public class BookingController {
                                                       @RequestParam(defaultValue = "ALL") String state,
                                                       @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                       @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        BookingState bookingState = BookingState.from(state)
-                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));
-        return bookingService.findBookingsByState(bookerId, bookingState, from, size);
+        /*BookingState bookingState = BookingState.from(state)
+                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));*/
+        return bookingService.findBookingsByState(bookerId, BookingState.valueOf(state), from, size);
     }
 
     @GetMapping("/owner")
@@ -51,9 +50,9 @@ public class BookingController {
                                                            @RequestParam(defaultValue = "ALL") String state,
                                                            @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                            @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        BookingState bookingState = BookingState.from(state)
-                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));
-        return bookingService.findBookingsOwnerByState(ownerId, bookingState, from, size);
+        /*BookingState bookingState = BookingState.from(state)
+                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));*/
+        return bookingService.findBookingsOwnerByState(ownerId, BookingState.valueOf(state), from, size);
     }
 
     @PostMapping

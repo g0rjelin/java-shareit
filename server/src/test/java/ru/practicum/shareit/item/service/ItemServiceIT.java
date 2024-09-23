@@ -6,11 +6,13 @@ import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
@@ -122,5 +124,10 @@ class ItemServiceIT {
                 )));
             }
         }
+    }
+
+    @Test
+    void findItemById_shouldThrowNotFoundException_whenUserItemNotExist() {
+        Assertions.assertThrows(NotFoundException.class, () -> itemService.findItemById(0L));
     }
 }

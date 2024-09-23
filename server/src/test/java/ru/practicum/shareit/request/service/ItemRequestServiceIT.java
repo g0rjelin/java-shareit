@@ -5,10 +5,12 @@ import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestShortDto;
 import ru.practicum.shareit.request.model.ItemRequest;
@@ -59,5 +61,10 @@ class ItemRequestServiceIT {
                 hasProperty("description", equalTo(actualItemRequestDto.getDescription())),
                 hasProperty("created", equalTo(actualItemRequestDto.getCreated()))
         ));
+    }
+
+    @Test
+    void getItemRequestById_shouldThrowNotFoundException_whenItemRequestDoesNotExist() {
+        Assertions.assertThrows(NotFoundException.class, () -> itemRequestService.getItemRequestById(0L));
     }
 }

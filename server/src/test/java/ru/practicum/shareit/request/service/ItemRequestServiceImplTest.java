@@ -24,7 +24,6 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -213,7 +212,7 @@ class ItemRequestServiceImplTest {
                 .created(created)
                 .requestor(requestor)
                 .build();
-        when(itemRequestRepository.findById(itemRequestId)).thenReturn(Optional.of(itemRequest));
+        when(itemRequestRepository.getItemRequestBy(itemRequestId)).thenReturn(itemRequest);
         Long itemId = 10L;
         String itemName = "test item";
         String itemDescription = "test description";
@@ -249,7 +248,7 @@ class ItemRequestServiceImplTest {
     @Test
     void getItemRequestById_shouldThrowException_whenItemRequestNotFound() {
         Long itemRequestId = 1L;
-        when(itemRequestRepository.findById(itemRequestId)).thenReturn(Optional.empty());
+        when(itemRequestRepository.getItemRequestBy(itemRequestId)).thenThrow(NotFoundException.class);
 
         assertThrows(NotFoundException.class, () -> itemRequestService.getItemRequestById(itemRequestId));
     }

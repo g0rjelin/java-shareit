@@ -86,6 +86,9 @@
 						<configuration>
 							<outputDirectory>target/generated-sources/java</outputDirectory>
 							<processor>com.querydsl.apt.jpa.JPAAnnotationProcessor</processor>
+							<options>
+								<querydsl.excludedClasses>ru.practicum.shareit.item.model.Comment,ru.practicum.shareit.item.model.QComment,ru.practicum.shareit.booking.model.QBooking,ru.practicum.shareit.booking.model.Booking</querydsl.excludedClasses>
+							</options>
 						</configuration>
 					</execution>
 				</executions>

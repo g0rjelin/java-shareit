@@ -6,13 +6,11 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestFullDto;
 import ru.practicum.shareit.request.dto.ItemRequestShortDto;
 import ru.practicum.shareit.request.mapper.ItemRequestMapper;
-import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -52,11 +50,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestFullDto getItemRequestById(Long requestId) {
-        return ItemRequestMapper.toItemRequestFullDto(getRequestById(requestId), itemRepository.findAllByRequestId(requestId));
-    }
-
-    private ItemRequest getRequestById(Long requestId) {
-        return itemRequestRepository.findById(requestId)
-                .orElseThrow(() -> new NotFoundException(String.format(REQUEST_NOT_FOUND_MSG, requestId)));
+        return ItemRequestMapper.toItemRequestFullDto(itemRequestRepository.getItemRequestBy(requestId), itemRepository.findAllByRequestId(requestId));
     }
 }

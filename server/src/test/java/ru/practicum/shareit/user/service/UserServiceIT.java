@@ -4,10 +4,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
@@ -50,5 +52,10 @@ class UserServiceIT {
                 hasProperty("name", equalTo(actualUserDto.getName())),
                 hasProperty("email", equalTo(actualUserDto.getEmail()))
         ));
+    }
+
+    @Test
+    void findUserById_shouldThrowNotFoundException_whenUserDoesNotExist() {
+        Assertions.assertThrows(NotFoundException.class, () -> userService.findUserById(0L));
     }
 }
