@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
-class UserServiceIT {
+class UserServiceIntegrationTest {
 
     private final UserService userService;
 

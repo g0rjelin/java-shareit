@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
-class BookingServiceIT {
+class BookingServiceIntegrationTest {
 
     private final BookingService bookingService;
 

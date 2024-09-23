@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
-class ItemRequestServiceIT {
+class ItemRequestServiceIntegrationTest {
 
     private final ItemRequestService itemRequestService;
 

@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
-class ItemServiceIT {
+class ItemServiceIntegrationTest {
 
     private final ItemService itemService;
 
