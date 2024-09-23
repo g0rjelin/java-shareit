@@ -45,6 +45,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public Collection<ItemRequestDto> getAllOtherItemRequestsByUserId(Long userId, Integer from, Integer size) {
+        User user = userRepository.getUserById(userId);
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
         return ItemRequestMapper.toItemRequestDto(itemRequestRepository.findByRequestorIdNotOrderByCreatedDesc(userId, page).getContent());
     }

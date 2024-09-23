@@ -49,6 +49,7 @@ public class ItemRequestMapper {
                 .collect(Collectors.groupingBy(i -> i.getRequest().getId()));
         for (ItemRequest itemRequest : itemRequests) {
             itemRequestFullDtos.add(ItemRequestFullDto.builder()
+                    .id(itemRequest.getId())
                     .description(itemRequest.getDescription())
                     .created(itemRequest.getCreated())
                     .items(ItemMapper.toItemForItemRequestDto(itemsMap.get(itemRequest.getId())))

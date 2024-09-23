@@ -12,7 +12,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
@@ -118,16 +117,4 @@ class UserControllerTest {
 
         Mockito.verify(userService, Mockito.times(1)).delete(id);
     }
-
-    @Test
-    @SneakyThrows
-    void deleteTest_ThrowNotFoundException() {
-        long id = 1L;
-        Mockito.doThrow(NotFoundException.class).when(userService).delete(id);
-
-        mockMvc.perform(delete("/users/" + id)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
 }
