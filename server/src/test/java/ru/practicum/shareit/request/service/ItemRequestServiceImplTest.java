@@ -60,7 +60,7 @@ class ItemRequestServiceImplTest {
     Collection<ItemRequestFullDto> itemRequestFullDtos;
 
     @BeforeEach
-    void ItemRequestServiceTestSetUp() {
+    void itemRequestServiceTestSetUp() {
         Long id = 1L;
         String name = "test user";
         String email = "test@test.com";

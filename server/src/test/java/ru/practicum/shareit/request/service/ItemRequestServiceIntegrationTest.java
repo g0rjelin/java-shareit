@@ -47,7 +47,7 @@ class ItemRequestServiceIntegrationTest {
         ItemRequestShortDto itemRequestShortDto = new ItemRequestShortDto(description);
 
         ItemRequestDto actualItemRequestDto = itemRequestService.create(requestor.getId(), itemRequestShortDto);
-        ItemRequestFullDto actualItemRequestFullDto = itemRequestService.getItemRequestById(actualItemRequestDto.getId()) ;
+        ItemRequestFullDto actualItemRequestFullDto = itemRequestService.getItemRequestById(actualItemRequestDto.getId());
 
         assertThat(actualItemRequestDto, notNullValue());
         assertThat(actualItemRequestDto, allOf(

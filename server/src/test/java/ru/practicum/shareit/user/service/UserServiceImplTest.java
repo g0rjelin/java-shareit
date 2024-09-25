@@ -32,7 +32,7 @@ public class UserServiceImplTest {
     UserDto newUserDto;
 
     @BeforeEach
-    void UserServiceTestSetUp() {
+    void userServiceTestSetUp() {
         Long id = 1L;
         String name = "test user";
         String email = "test@test.com";
