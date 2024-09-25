@@ -40,8 +40,6 @@ public class BookingController {
                                                       @RequestParam(defaultValue = "ALL") String state,
                                                       @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                       @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        /*BookingState bookingState = BookingState.from(state)
-                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));*/
         return bookingService.findBookingsByState(bookerId, BookingState.valueOf(state), from, size);
     }
 
@@ -50,8 +48,6 @@ public class BookingController {
                                                            @RequestParam(defaultValue = "ALL") String state,
                                                            @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                            @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        /*BookingState bookingState = BookingState.from(state)
-                .orElseThrow(() -> new BadRequestParamException("Unknown state: " + state));*/
         return bookingService.findBookingsOwnerByState(ownerId, BookingState.valueOf(state), from, size);
     }
 

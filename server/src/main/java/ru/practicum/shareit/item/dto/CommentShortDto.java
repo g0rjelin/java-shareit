@@ -1,18 +1,15 @@
 package ru.practicum.shareit.item.dto;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
+@RequiredArgsConstructor
+@AllArgsConstructor
 public class CommentShortDto {
-    final String text;
-
-    @JsonCreator
-    public CommentShortDto(@JsonProperty("text") String text) {
-        this.text = text;
-    }
+    String text;
 }

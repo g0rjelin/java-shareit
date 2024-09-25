@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.RequestDto;
 
 import static ru.practicum.shareit.common.CommonConstants.X_SHARER_USER_ID;
 
@@ -33,7 +33,7 @@ public class ItemRequestController {
 
     @PostMapping
     public ResponseEntity<Object> addItemRequest(@RequestHeader(X_SHARER_USER_ID) long userId,
-                                                 @RequestBody @Valid ItemRequestDto requestDto) {
+                                                 @RequestBody @Valid RequestDto requestDto) {
         log.info("Creating request {}, userId={}", requestDto, userId);
         return itemRequestClient.addItemRequest(userId, requestDto);
     }

@@ -1,6 +1,7 @@
 package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,17 +26,29 @@ public class UserServiceImplTest {
     @MockBean
     private UserRepository userRepository;
 
-    @Test
-    void findUserById_shouldReturnUserDto_whenUserFound() {
+    User user;
+    User newUser;
+    UserDto userDto;
+    UserDto newUserDto;
+
+    @BeforeEach
+    void UserServiceTestSetUp() {
         Long id = 1L;
         String name = "test user";
         String email = "test@test.com";
-        when(userRepository.getUserById(id))
-                .thenReturn(
-                        User.builder().id(id).name(name).email(email).build());
-        UserDto expectedUserDto = UserDto.builder().id(id).name(name).email(email).build();
+        user = new User(id, name, email);
+        userDto = UserDto.builder().id(id).name(name).email(email).build();
+        newUser = User.builder().name(name).email(email).build();
+        newUserDto = UserDto.builder().name(name).email(email).build();
+    }
 
-        UserDto actualUserDto = userService.findUserById(id);
+    @Test
+    void findUserById_shouldReturnUserDto_whenUserFound() {
+        when(userRepository.getUserById(user.getId()))
+                .thenReturn(user);
+        UserDto expectedUserDto = userDto;
+
+        UserDto actualUserDto = userService.findUserById(user.getId());
 
         assertNotNull(actualUserDto);
         assertEquals(expectedUserDto, actualUserDto);
@@ -43,23 +56,16 @@ public class UserServiceImplTest {
 
     @Test
     void findUserById_shouldReturnNotFoundException_whenUserNotFound() {
-        Long id = 1L;
+        when(userRepository.getUserById(user.getId())).thenThrow(NotFoundException.class);
 
-        when(userRepository.getUserById(id)).thenThrow(NotFoundException.class);
-
-        assertThrows(NotFoundException.class, () -> userService.findUserById(id));
+        assertThrows(NotFoundException.class, () -> userService.findUserById(user.getId()));
         verify(userRepository, never()).findById(anyLong());
     }
 
     @Test
     void createUser_shouldCreateUserDto() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
-        User newUser = User.builder().id(id).name(name).email(email).build();
-        UserDto newUserDto = UserDto.builder().id(id).name(name).email(email).build();
-        when(userRepository.save(newUser)).thenReturn(newUser);
-        UserDto expectedUserDto = UserDto.builder().id(id).name(name).email(email).build();
+        when(userRepository.save(newUser)).thenReturn(user);
+        UserDto expectedUserDto = userDto;
 
         UserDto actualUserDto = userService.create(newUserDto);
 
@@ -71,15 +77,7 @@ public class UserServiceImplTest {
 
     @Test
     void createUser_shouldThrowException_whenUserWithSameEmailAlreadyExists() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
-        Long newUserId = 2L;
-        String newUserName = "another test user";
-        String newUserEmail = "test@test.com";
-        User user = User.builder().id(id).name(name).email(email).build();
-        UserDto newUserDto = UserDto.builder().id(newUserId).name(newUserName).email(newUserEmail).build();
-        when(userRepository.findUserByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.findUserByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
         assertThrows(UniqueConstraintException.class, () -> userService.create(newUserDto));
         verify(userRepository, never()).save(any(User.class));
@@ -87,21 +85,17 @@ public class UserServiceImplTest {
 
     @Test
     void updateUser_shouldUpdateUserDto() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
         String newName = "new name";
         String newEmail = "new@email.com";
-        UserDto updUserDto = UserDto.builder().id(id).name(newName).email(newEmail).build();
-        User updUser = User.builder().id(id).name(newName).email(newEmail).build();
-        when(userRepository.getUserById(id))
-                .thenReturn(
-                        User.builder().id(id).name(name).email(email).build());
+        UserDto updUserDto = UserDto.builder().name(newName).email(newEmail).build();
+        User updUser = User.builder().id(user.getId()).name(newName).email(newEmail).build();
+        when(userRepository.getUserById(user.getId()))
+                .thenReturn(user);
         when(userRepository.save(updUser)).thenReturn(updUser);
-        when(userRepository.findUserByEmail(email)).thenReturn(Optional.empty());
-        UserDto expectedUserDto = UserDto.builder().id(id).name(newName).email(newEmail).build();
+        when(userRepository.findUserByEmail(user.getEmail())).thenReturn(Optional.empty());
+        UserDto expectedUserDto = UserDto.builder().id(user.getId()).name(newName).email(newEmail).build();
 
-        UserDto actualUserDto = userService.update(id, updUserDto);
+        UserDto actualUserDto = userService.update(user.getId(), updUserDto);
 
         assertNotNull(actualUserDto);
         assertEquals(expectedUserDto, actualUserDto);
@@ -112,20 +106,16 @@ public class UserServiceImplTest {
 
     @Test
     void updateUser_shouldUpdateNameUserDto_whenUserFound() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
         String newName = "new name";
-        UserDto updUserDto = UserDto.builder().id(id).name(newName).build();
-        User updUser = User.builder().id(id).name(newName).email(email).build();
-        when(userRepository.getUserById(id))
-                .thenReturn(
-                        User.builder().id(id).name(name).email(email).build());
-        when(userRepository.save(updUser)).thenReturn(updUser);
-        when(userRepository.findUserByEmail(email)).thenReturn(Optional.empty());
-        UserDto expectedUserDto = UserDto.builder().id(id).name(newName).email(email).build();
+        UserDto updUserDto = UserDto.builder().name(newName).build();
+        User updUser = User.builder().id(user.getId()).name(newName).email(user.getEmail()).build();
+        user.setName(newName);
+        when(userRepository.getUserById(user.getId())).thenReturn(user);
+        when(userRepository.save(updUser)).thenReturn(user);
+        when(userRepository.findUserByEmail(user.getEmail())).thenReturn(Optional.empty());
+        UserDto expectedUserDto = UserDto.builder().id(user.getId()).name(newName).email(user.getEmail()).build();
 
-        UserDto actualUserDto = userService.update(id, updUserDto);
+        UserDto actualUserDto = userService.update(user.getId(), updUserDto);
 
         assertNotNull(actualUserDto);
         assertEquals(actualUserDto, expectedUserDto);
@@ -136,20 +126,15 @@ public class UserServiceImplTest {
 
     @Test
     void updateUser_shouldUpdateEmailUserDto_whenUserFound() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
         String newEmail = "new@email.com";
-        UserDto updUserDto = UserDto.builder().id(id).email(newEmail).build();
-        User updUser = User.builder().id(id).name(name).email(newEmail).build();
-        when(userRepository.getUserById(id))
-                .thenReturn(
-                        User.builder().id(id).name(name).email(email).build());
+        UserDto updUserDto = UserDto.builder().email(newEmail).build();
+        User updUser = User.builder().id(user.getId()).name(user.getName()).email(newEmail).build();
+        when(userRepository.getUserById(user.getId())).thenReturn(user);
         when(userRepository.save(updUser)).thenReturn(updUser);
-        when(userRepository.findUserByEmail(email)).thenReturn(Optional.empty());
-        UserDto expectedUserDto = UserDto.builder().id(id).name(name).email(newEmail).build();
+        when(userRepository.findUserByEmail(user.getEmail())).thenReturn(Optional.empty());
+        UserDto expectedUserDto = UserDto.builder().id(user.getId()).name(user.getName()).email(newEmail).build();
 
-        UserDto actualUserDto = userService.update(id, updUserDto);
+        UserDto actualUserDto = userService.update(user.getId(), updUserDto);
 
         assertNotNull(actualUserDto);
         assertEquals(actualUserDto, expectedUserDto);
@@ -160,10 +145,9 @@ public class UserServiceImplTest {
 
     @Test
     void updateUser_shouldReturnNotFoundException_whenUserNotFound() {
-        Long id = 1L;
         Long notFoundId = 2L;
         String newEmail = "new@email.com";
-        UserDto updUserDto = UserDto.builder().id(id).email(newEmail).build();
+        UserDto updUserDto = UserDto.builder().email(newEmail).build();
 
         when(userRepository.getUserById(notFoundId)).thenThrow(NotFoundException.class);
 
@@ -173,35 +157,27 @@ public class UserServiceImplTest {
 
     @Test
     void updateUser_shouldThrowException_whenUserWithSameEmailAlreadyExists() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
         String newUserName = "new user name";
         String newUserEmail = "email_that_exists@test.com";
         Long anotherId = 2L;
         String anotherName = "another user";
         String anotherEmail = "email_that_exists@test.com";
         User anotherUser = User.builder().id(anotherId).name(anotherName).email(anotherEmail).build();
-        UserDto updateUserDto = UserDto.builder().id(id).name(newUserName).email(newUserEmail).build();
-        when(userRepository.getUserById(id))
-                .thenReturn(
-                        User.builder().id(id).name(name).email(email).build());
+        UserDto updateUserDto = UserDto.builder().id(user.getId()).name(newUserName).email(newUserEmail).build();
+        when(userRepository.getUserById(user.getId())).thenReturn(user);
+
         when(userRepository.findUserByEmail(anotherEmail)).thenReturn(Optional.of(anotherUser));
 
-        assertThrows(UniqueConstraintException.class, () -> userService.update(id, updateUserDto));
+        assertThrows(UniqueConstraintException.class, () -> userService.update(user.getId(), updateUserDto));
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void deleteUser_shouldDelete_whenUserFound() {
-        Long id = 1L;
-        String name = "test user";
-        String email = "test@test.com";
-        User user = User.builder().id(id).name(name).email(email).build();
-        when(userRepository.getUserById(id))
+        when(userRepository.getUserById(user.getId()))
                 .thenReturn(user);
 
-        userService.delete(id);
+        userService.delete(user.getId());
         verify(userRepository, times(1)).delete(user);
     }
 

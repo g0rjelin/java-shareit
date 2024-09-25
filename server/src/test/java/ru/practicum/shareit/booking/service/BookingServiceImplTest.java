@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,23 +49,35 @@ class BookingServiceImplTest {
     @MockBean
     private ItemRepository itemRepository;
 
-    @Test
-    void findBookingById_shouldReturnBookingDto_whenBookingFound() {
-        Long bookerId = 1L;
+    User user;
+    User booker;
+    User owner;
+    Item item;
+    Booking booking;
+    BookingDto bookingDto;
+    Collection<BookingDto> bookingDtos;
+    List<Booking> bookings;
+    BookingShortDto bookingToCreateShortDto;
+
+    @BeforeEach
+    void bookingServiceTestSetUp() {
+        Long userId = 1L;
+        String userName = "test user user";
+        String userEmail = "user@test.com";
+        user = User.builder().id(userId).name(userName).email(userEmail).build();
+        Long bookerId = 2L;
         String bookerName = "test user user";
         String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long ownerId = 2L;
+        booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
+        Long ownerId = 3L;
         String ownerName = "test user owner";
         String ownerEmail = "owner@test.com";
-        User owner = User.builder().id(ownerId).name(ownerName).email(ownerEmail).build();
-        when(userRepository.getUserById(ownerId)).thenReturn(owner);
+        owner = User.builder().id(ownerId).name(ownerName).email(ownerEmail).build();
         Long itemId = 10L;
         String itemName = "test item name";
         String itemDescription = "test item description";
         Boolean available = Boolean.TRUE;
-        Item item = Item.builder()
+        item = Item.builder()
                 .id(itemId)
                 .name(itemName)
                 .description(itemDescription)
@@ -74,7 +87,7 @@ class BookingServiceImplTest {
         Long bookingId = 1000L;
         LocalDateTime start = LocalDateTime.now();
         LocalDateTime end = start.plusMinutes(5);
-        Booking booking = Booking.builder()
+        booking = Booking.builder()
                 .id(bookingId)
                 .start(start)
                 .end(end)
@@ -82,17 +95,37 @@ class BookingServiceImplTest {
                 .status(BookingStatus.APPROVED)
                 .item(item)
                 .build();
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        BookingDto expectedBookingDto = BookingDto.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(UserDto.builder().id(bookerId).name(bookerName).email(bookerEmail).build())
-                .item(ItemShortDto.builder().id(itemId).name(itemName).description(itemDescription).available(available).build())
-                .status(BookingStatus.APPROVED.toString())
+        bookings = List.of(booking);
+        bookingDto = BookingDto.builder()
+                .id(booking.getId())
+                .start(booking.getStart())
+                .end(booking.getEnd())
+                .status(booking.getStatus().toString())
+                .item(ItemShortDto.builder()
+                        .id(item.getId())
+                        .name(item.getName())
+                        .description(item.getDescription())
+                        .available(item.getAvailable())
+                        .build()
+                )
+                .booker(UserDto.builder().id(booker.getId()).name(booker.getName()).email(booker.getEmail()).build())
                 .build();
+        bookingDtos = List.of(bookingDto);
+        bookingToCreateShortDto = BookingShortDto.builder()
+                .start(booking.getStart())
+                .end(booking.getEnd())
+                .itemId(item.getId())
+                .build();
+    }
 
-        BookingDto actualBookingDto = bookingService.findBookingById(bookerId, bookingId);
+    @Test
+    void findBookingById_shouldReturnBookingDto_whenBookingFound() {
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(userRepository.getUserById(owner.getId())).thenReturn(owner);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+        BookingDto expectedBookingDto = bookingDto;
+
+        BookingDto actualBookingDto = bookingService.findBookingById(booker.getId(), booking.getId());
 
         assertNotNull(actualBookingDto);
         assertEquals(expectedBookingDto, actualBookingDto);
@@ -106,113 +139,40 @@ class BookingServiceImplTest {
 
     @Test
     void findBookingById_shouldThrowNotFoundException_whenBookingNotFound() {
-        Long bookingId = 1000L;
-        Long userId = 2L;
-        String userName = "test user user";
-        String userEmail = "user@test.com";
-        User user = User.builder().id(userId).name(userName).email(userEmail).build();
-        when(userRepository.getUserById(userId)).thenReturn(user);
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
+        when(userRepository.getUserById(user.getId())).thenReturn(user);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> bookingService.findBookingById(userId, bookingId));
+        assertThrows(NotFoundException.class, () -> bookingService.findBookingById(user.getId(), booking.getId()));
     }
 
     @Test
     void findBookingById_shouldThrowNotFoundException_whenUserNotFound() {
-        Long userId = 2L;
-        Long bookingId = 1000L;
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .item(Item.builder().id(10L).name("name").description("description").available(true).build())
-                .build();
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(userRepository.getUserById(userId)).thenThrow(NotFoundException.class);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+        when(userRepository.getUserById(user.getId())).thenThrow(NotFoundException.class);
 
-        assertThrows(NotFoundException.class, () -> bookingService.findBookingById(userId, bookingId));
+        assertThrows(NotFoundException.class, () -> bookingService.findBookingById(user.getId(), booking.getId()));
     }
 
     @Test
     void findBookingById_shouldThrowNotAllowException_whenCalledNotByBookerOrOwner() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long ownerId = 2L;
-        String ownerName = "test user owner";
-        String ownerEmail = "owner@test.com";
-        User owner = User.builder().id(ownerId).name(ownerName).email(ownerEmail).build();
-        when(userRepository.getUserById(ownerId)).thenReturn(owner);
-        Long userId = 3L;
-        String userName = "test user user";
-        String userEmail = "user@test.com";
-        User user = User.builder().id(userId).name(userName).email(userEmail).build();
-        when(userRepository.getUserById(userId)).thenReturn(user);
-        Long bookingId = 1000L;
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .booker(booker)
-                .item(Item.builder().id(10L).name("name").description("description").available(true).owner(owner).build())
-                .status(BookingStatus.APPROVED)
-                .build();
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(userRepository.getUserById(owner.getId())).thenReturn(owner);
+        when(userRepository.getUserById(user.getId())).thenReturn(user);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
 
-        assertThrows(NotAllowedException.class, () -> bookingService.findBookingById(userId, bookingId));
+        assertThrows(NotAllowedException.class, () -> bookingService.findBookingById(user.getId(), booking.getId()));
     }
 
     @Test
     void findBookingsByState_shouldReturnCollectionBookings() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long ownerId = 2L;
-        String ownerName = "test user owner";
-        String ownerEmail = "owner@test.com";
-        User owner = User.builder().id(ownerId).name(ownerName).email(ownerEmail).build();
-        when(userRepository.getUserById(ownerId)).thenReturn(owner);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = Boolean.TRUE;
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusMinutes(5);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(booker)
-                .status(BookingStatus.APPROVED)
-                .item(item)
-                .build();
-        List<Booking> bookings = List.of(booking);
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(userRepository.getUserById(owner.getId())).thenReturn(owner);
         Page<Booking> pagedBookings = new PageImpl<Booking>(bookings);
-        when(bookingRepository.findAllByState(bookerId, BookingState.ALL.toString(), PageRequest.of(0, 10)))
+        when(bookingRepository.findAllByState(booker.getId(), BookingState.ALL.toString(), PageRequest.of(0, 10)))
                 .thenReturn(pagedBookings);
-        Collection<BookingDto> expectedBookingDtos = List.of(BookingDto.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .status(BookingStatus.APPROVED.toString())
-                .item(ItemShortDto.builder()
-                        .id(itemId)
-                        .name(itemName)
-                        .description(itemDescription)
-                        .available(available)
-                        .build())
-                .booker(UserDto.builder().id(bookerId).name(bookerName).email(bookerEmail).build())
-                .build());
+        Collection<BookingDto> expectedBookingDtos = bookingDtos;
 
-        Collection<BookingDto> actualBookingDtos = bookingService.findBookingsByState(bookerId, BookingState.ALL, 0, 10);
+        Collection<BookingDto> actualBookingDtos = bookingService.findBookingsByState(booker.getId(), BookingState.ALL, 0, 10);
 
         assertEquals(expectedBookingDtos.size(), actualBookingDtos.size());
         assertIterableEquals(expectedBookingDtos, actualBookingDtos);
@@ -220,58 +180,15 @@ class BookingServiceImplTest {
 
     @Test
     void findBookingsOwnerByState_shouldReturnCollectionBookings_whenOwnedItemsFound() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long ownerId = 2L;
-        String ownerName = "test user owner";
-        String ownerEmail = "owner@test.com";
-        User owner = User.builder().id(ownerId).name(ownerName).email(ownerEmail).build();
-        when(userRepository.getUserById(ownerId)).thenReturn(owner);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = Boolean.TRUE;
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusMinutes(5);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(booker)
-                .status(BookingStatus.APPROVED)
-                .item(item)
-                .build();
-        List<Booking> bookings = List.of(booking);
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(userRepository.getUserById(owner.getId())).thenReturn(owner);
         Page<Booking> pagedBookings = new PageImpl<Booking>(bookings);
-        when(itemRepository.existsItemsByOwnerId(ownerId)).thenReturn(true);
-        when(bookingRepository.findAllOwnerByState(ownerId, BookingState.ALL.toString(), PageRequest.of(0, 10)))
+        when(itemRepository.existsItemsByOwnerId(owner.getId())).thenReturn(true);
+        when(bookingRepository.findAllOwnerByState(owner.getId(), BookingState.ALL.toString(), PageRequest.of(0, 10)))
                 .thenReturn(pagedBookings);
-        Collection<BookingDto> expectedBookingDtos = List.of(BookingDto.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .status(BookingStatus.APPROVED.toString())
-                .item(ItemShortDto.builder()
-                        .id(itemId)
-                        .name(itemName)
-                        .description(itemDescription)
-                        .available(available)
-                        .build())
-                .booker(UserDto.builder().id(bookerId).name(bookerName).email(bookerEmail).build())
-                .build());
+        Collection<BookingDto> expectedBookingDtos = bookingDtos;
 
-        Collection<BookingDto> actualBookingDtos = bookingService.findBookingsOwnerByState(ownerId, BookingState.ALL, 0, 10);
+        Collection<BookingDto> actualBookingDtos = bookingService.findBookingsOwnerByState(owner.getId(), BookingState.ALL, 0, 10);
 
         assertEquals(expectedBookingDtos.size(), actualBookingDtos.size());
         assertIterableEquals(expectedBookingDtos, actualBookingDtos);
@@ -279,63 +196,22 @@ class BookingServiceImplTest {
 
     @Test
     void findBookingsOwnerByState_shouldThrowNotFoundException_whenOwnedItemsNotFound() {
-        Long ownerId = 1L;
-        when(itemRepository.existsItemsByOwnerId(ownerId)).thenReturn(false);
+        when(itemRepository.existsItemsByOwnerId(owner.getId())).thenReturn(false);
 
-        assertThrows(NotFoundException.class, () -> bookingService.findBookingsOwnerByState(ownerId, BookingState.ALL, 0, 10));
+        assertThrows(NotFoundException.class, () -> bookingService.findBookingsOwnerByState(owner.getId(), BookingState.ALL, 0, 10));
         verify(itemRepository, never()).findAllByOwnerId(anyLong());
     }
 
     @Test
     void createBooking_shouldReturnBookingDto_whenAllConditionsMet() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = true;
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        when(itemRepository.getItemById(itemId)).thenReturn(item);
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now().plusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(2);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .item(item)
-                .booker(booker)
-                .status(BookingStatus.APPROVED)
-                .build();
-        when(bookingRepository.existIntersectingBookingDatesForItem(start, end, item.getId()))
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(itemRepository.getItemById(item.getId())).thenReturn(item);
+        when(bookingRepository.existIntersectingBookingDatesForItem(booking.getStart(), booking.getEnd(), item.getId()))
                 .thenReturn(false);
-        BookingShortDto bookingShortDto = BookingShortDto.builder()
-                .start(start)
-                .end(end)
-                .itemId(itemId)
-                .build();
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
-        BookingDto expectedBookingDto = BookingDto.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(UserDto.builder().id(bookerId).name(bookerName).email(bookerEmail).build())
-                .status(BookingStatus.APPROVED.toString())
-                .item(ItemShortDto.builder().id(itemId).name(itemName).description(itemDescription).available(available).build())
-                .build();
+        BookingDto expectedBookingDto = bookingDto;
 
-        BookingDto actualBookingDto = bookingService.create(bookerId, bookingShortDto);
+        BookingDto actualBookingDto = bookingService.create(booker.getId(), bookingToCreateShortDto);
 
         assertNotNull(actualBookingDto);
         assertEquals(expectedBookingDto, actualBookingDto);
@@ -354,206 +230,70 @@ class BookingServiceImplTest {
 
     @Test
     void createBooking_shouldThrowNotFoundException_whenUserNotFound() {
-        Long bookerId = 1L;
-        when(userRepository.getUserById(bookerId)).thenThrow(NotFoundException.class);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = false;
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        when(itemRepository.getItemById(itemId)).thenReturn(item);
+        when(userRepository.getUserById(booker.getId())).thenThrow(NotFoundException.class);
+        when(itemRepository.getItemById(item.getId())).thenReturn(item);
 
-        assertThrows(NotFoundException.class, () -> bookingService.create(bookerId, BookingShortDto.builder()
-                .itemId(itemId)
-                .start(LocalDateTime.now())
-                .end(LocalDateTime.now().plusDays(1))
-                .build()));
+        assertThrows(NotFoundException.class, () -> bookingService.create(booker.getId(), bookingToCreateShortDto));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void createBooking_shouldThrowNotFoundException_whenItemNotFound() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long itemId = 10L;
-        when(itemRepository.getItemById(itemId)).thenThrow(NotFoundException.class);
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(itemRepository.getItemById(item.getId())).thenThrow(NotFoundException.class);
 
-        assertThrows(NotFoundException.class, () -> bookingService.create(bookerId, BookingShortDto.builder()
-                .itemId(itemId)
-                .start(LocalDateTime.now())
-                .end(LocalDateTime.now().plusDays(1))
-                .build()));
+        assertThrows(NotFoundException.class, () -> bookingService.create(booker.getId(), bookingToCreateShortDto));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void createBooking_shouldThrowBadRequestException_whenItemNotAvailable() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = false;
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        when(itemRepository.getItemById(itemId)).thenReturn(item);
+        item.setAvailable(false);
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(itemRepository.getItemById(item.getId())).thenReturn(item);
 
-        assertThrows(BadRequestException.class, () -> bookingService.create(bookerId, BookingShortDto.builder()
-                .itemId(itemId)
-                .start(LocalDateTime.now())
-                .end(LocalDateTime.now().plusDays(1))
-                .build()));
+        assertThrows(BadRequestException.class, () -> bookingService.create(booker.getId(), bookingToCreateShortDto));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void createBooking_shouldThrowBadRequestException_whenItemOwnerCantBook() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = true;
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(booker)
-                .build();
-        when(itemRepository.getItemById(itemId)).thenReturn(item);
+        item.setOwner(booker);
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(itemRepository.getItemById(item.getId())).thenReturn(item);
 
-        assertThrows(BadRequestException.class, () -> bookingService.create(bookerId, BookingShortDto.builder()
-                .itemId(itemId)
-                .start(LocalDateTime.now())
-                .end(LocalDateTime.now().plusDays(1))
-                .build()));
+        assertThrows(BadRequestException.class, () -> bookingService.create(booker.getId(), bookingToCreateShortDto));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void createBooking_shouldThrowBadRequestException_whenBookingHasIntersections() {
-        Long bookerId = 1L;
-        String bookerName = "test user user";
-        String bookerEmail = "booker@test.com";
-        User booker = User.builder().id(bookerId).name(bookerName).email(bookerEmail).build();
-        when(userRepository.getUserById(bookerId)).thenReturn(booker);
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = true;
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        when(itemRepository.getItemById(itemId)).thenReturn(item);
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now().plusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(2);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .item(item)
-                .booker(booker)
-                .status(BookingStatus.APPROVED)
-                .build();
-        when(bookingRepository.existIntersectingBookingDatesForItem(start, end, item.getId()))
-                        .thenReturn(true);
+        when(userRepository.getUserById(booker.getId())).thenReturn(booker);
+        when(itemRepository.getItemById(item.getId())).thenReturn(item);
+        when(bookingRepository.existIntersectingBookingDatesForItem(booking.getStart(), booking.getEnd(), item.getId()))
+                .thenReturn(true);
 
-        assertThrows(BadRequestException.class, () -> bookingService.create(bookerId, BookingShortDto.builder()
-                .itemId(itemId)
-                .start(start)
-                .end(end)
-                .build()));
+        assertThrows(BadRequestException.class, () -> bookingService.create(booker.getId(), bookingToCreateShortDto));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void updateBooking_shouldReturnBookingDto_whenAllConditionsMet() {
-        Long userId = 1L;
-        String userName = "test user user";
-        String userEmail = "test@test.com";
-        User user = User.builder().id(userId).name(userName).email(userEmail).build();
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = false;
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusMinutes(5);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(user)
-                .status(BookingStatus.WAITING)
-                .item(item)
-                .build();
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        booking.setStatus(BookingStatus.WAITING);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+        when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
         Booking returnedBooking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(user)
+                .id(booking.getId())
+                .start(booking.getStart())
+                .end(booking.getEnd())
+                .booker(booker)
                 .status(BookingStatus.APPROVED)
                 .item(item)
                 .build();
         when(bookingRepository.save(booking)).thenReturn(returnedBooking);
-        BookingDto expectedBookingDto = BookingDto.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .item(ItemShortDto.builder()
-                        .id(itemId)
-                        .name(itemName)
-                        .description(itemDescription)
-                        .available(available)
-                        .build())
-                .status(BookingStatus.APPROVED.toString())
-                .booker(UserDto.builder().id(userId).email(userEmail).name(userName).build())
-                .build();
+        BookingDto expectedBookingDto = bookingDto;
 
-        BookingDto actualBookingDto = bookingService.update(ownerId, bookingId, true);
+        BookingDto actualBookingDto = bookingService.update(owner.getId(), booking.getId(), true);
 
         assertNotNull(actualBookingDto);
         assertEquals(expectedBookingDto, actualBookingDto);
@@ -562,87 +302,28 @@ class BookingServiceImplTest {
 
     @Test
     void updateBooking_shouldThrowNotFoundException_whenBookingNotFound() {
-        Long bookingId = 1L;
-        Long ownerId = 2L;
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class,  () -> bookingService.update(ownerId, bookingId, true));
+        assertThrows(NotFoundException.class, () -> bookingService.update(owner.getId(), booking.getId(), true));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
-
-        @Test
+    @Test
     void updateBooking_shouldThrowBadRequest_whenNotItemOwner() {
-        Long userId = 1L;
-        String userName = "test user user";
-        String userEmail = "test@test.com";
-        User user = User.builder().id(userId).name(userName).email(userEmail).build();
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = false;
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(user)
-                .build();
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusMinutes(5);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(user)
-                .status(BookingStatus.WAITING)
-                .item(item)
-                .build();
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        item.setOwner(user);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+        when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
 
-
-        assertThrows(NotAllowedException.class, () -> bookingService.update(ownerId, bookingId, true));
+        assertThrows(NotAllowedException.class, () -> bookingService.update(owner.getId(), booking.getId(), true));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void updateBooking_shouldNotAllowedException_whenStatusNotWaiting() {
-        Long userId = 1L;
-        String userName = "test user user";
-        String userEmail = "test@test.com";
-        User user = User.builder().id(userId).name(userName).email(userEmail).build();
-        Long ownerId = 2L;
-        User owner = User.builder().id(ownerId).name("owner").email("owner@test.com").build();
-        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
-        Long itemId = 10L;
-        String itemName = "test item name";
-        String itemDescription = "test item description";
-        Boolean available = false;
-        Item item = Item.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(available)
-                .owner(owner)
-                .build();
-        Long bookingId = 1000L;
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusMinutes(5);
-        Booking booking = Booking.builder()
-                .id(bookingId)
-                .start(start)
-                .end(end)
-                .booker(user)
-                .status(BookingStatus.APPROVED)
-                .item(item)
-                .build();
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
 
-        assertThrows(NotAllowedException.class, () -> bookingService.update(ownerId, bookingId, true));
+        assertThrows(NotAllowedException.class, () -> bookingService.update(owner.getId(), booking.getId(), true));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 }

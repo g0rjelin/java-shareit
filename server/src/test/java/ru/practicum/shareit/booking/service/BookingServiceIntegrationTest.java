@@ -1,19 +1,21 @@
 package ru.practicum.shareit.booking.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
-import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.item.dto.ItemShortDto;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,93 +36,94 @@ class BookingServiceIntegrationTest {
 
     private final EntityManager em;
 
-    @Test
-    void findBookingsOwnerByState_fullIntegrationTest() {
-        String userName = "test user";
-        String userEmail = "test@test.com";
+    User owner;
+    User booker;
+    Item item;
+    ItemShortDto itemShortDto;
+    UserDto bookerDto;
+
+    @BeforeEach
+    void setUp() {
+        String ownerUserName = "test user owner";
+        String ownerUserEmail = "owner@test.com";
+        owner = User.builder()
+                .name(ownerUserName).email(ownerUserEmail).build();
+        em.persist(owner);
+
         String bookerUserName = "test booker user";
         String bookerUserEmail = "booker@booker.com";
-        Query query = em.createNativeQuery("insert into users(name, email) values (:name, :email), (:bookerName, :bookerEmail)");
-        query.setParameter("name", userName);
-        query.setParameter("email", userEmail);
-        query.setParameter("bookerName", bookerUserName);
-        query.setParameter("bookerEmail", bookerUserEmail);
-        query.executeUpdate();
-        TypedQuery<Long> getIdQuery = em.createQuery("select id from User where email = :email", Long.class);
-        getIdQuery.setParameter("email", userEmail);
-        Long ownerId = getIdQuery.getSingleResult();
-        getIdQuery.setParameter("email", bookerUserEmail);
-        Long bookerId = getIdQuery.getSingleResult();
+        booker = User.builder()
+                .name(bookerUserName).email(bookerUserEmail).build();
+        em.persist(booker);
+
         String itemName = "test item";
         String itemDescription = "test item description";
         Boolean isAvailable = true;
-        query = em.createNativeQuery("insert into items(name, description, is_available, owner_id) values (:name, :description, :isAvailable, :ownerId)");
-        query.setParameter("name", itemName);
-        query.setParameter("description", itemDescription);
-        query.setParameter("isAvailable", isAvailable);
-        query.setParameter("ownerId", ownerId);
-        query.executeUpdate();
-        getIdQuery = em.createQuery("select id from Item where name = :itemName", Long.class);
-        getIdQuery.setParameter("itemName", itemName);
-        Long itemId = getIdQuery.getSingleResult();
+        item = Item.builder()
+                .name(itemName).description(itemDescription).available(isAvailable).owner(owner).build();
+        em.persist(item);
+
+        itemShortDto = ItemShortDto.builder().id(item.getId()).name(itemName).description(itemDescription).available(isAvailable).build();
+        bookerDto = UserDto.builder().id(booker.getId()).name(bookerUserName).email(bookerUserEmail).build();
+    }
+
+    @Test
+    void findBookingsOwnerByState_fullIntegrationTest() {
         LocalDateTime approvedBookingStartDate = LocalDateTime.of(2024, 1, 1, 12, 30);
         LocalDateTime approvedBookingEndDate = LocalDateTime.of(2024, 1, 1, 18, 30);
         LocalDateTime waitingBookingStartDate = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0)).plusDays(1);
         LocalDateTime waitingBookingEndDate = waitingBookingStartDate.plusHours(10);
         LocalDateTime rejectedBookingStartDate = LocalDateTime.of(2023, 1, 1, 12, 30);
         LocalDateTime rejectedBookingEndDate = LocalDateTime.of(2023, 1, 1, 18, 30);
-        query = em.createNativeQuery("insert into bookings(start_date, end_date, item_id, booker_id, status) values " +
-                "(:approvedBookingStartDate, :approvedBookingEndDate, :itemId, :bookerId, 'APPROVED')," +
-                "(:rejectedBookingStartDate, :rejectedBookingEndDate, :itemId, :bookerId, 'REJECTED')," +
-                "(:waitingBookingStartDate, :waitingBookingEndDate, :itemId, :bookerId, 'WAITING')");
-        query.setParameter("approvedBookingStartDate", approvedBookingStartDate);
-        query.setParameter("approvedBookingEndDate", approvedBookingEndDate);
-        query.setParameter("waitingBookingStartDate", waitingBookingStartDate);
-        query.setParameter("waitingBookingEndDate", waitingBookingEndDate);
-        query.setParameter("rejectedBookingStartDate", rejectedBookingStartDate);
-        query.setParameter("rejectedBookingEndDate", rejectedBookingEndDate);
-        query.setParameter("itemId", itemId);
-        query.setParameter("bookerId", bookerId);
-        query.executeUpdate();
-        ItemShortDto itemShortDto = ItemShortDto.builder()
-                .id(itemId)
-                .name(itemName)
-                .description(itemDescription)
-                .available(true)
+        BookingShortDto waitingBookingShortDto = BookingShortDto.builder()
+                .itemId(item.getId())
+                .start(waitingBookingStartDate)
+                .end(waitingBookingEndDate)
                 .build();
-        UserDto booker = UserDto.builder()
-                .id(bookerId)
-                .name(bookerUserName)
-                .email(bookerUserEmail)
+        BookingDto waitingBookingDto = bookingService.create(booker.getId(), waitingBookingShortDto);
+        BookingShortDto approvedBookingShortDto = BookingShortDto.builder()
+                .itemId(item.getId())
+                .start(approvedBookingStartDate)
+                .end(approvedBookingEndDate)
                 .build();
+        BookingDto approvedBookingDto = bookingService.create(booker.getId(), approvedBookingShortDto);
+        approvedBookingDto = bookingService.update(owner.getId(), approvedBookingDto.getId(), true);
+        BookingShortDto rejectedBookingShortDto = BookingShortDto.builder()
+                .itemId(item.getId())
+                .start(rejectedBookingStartDate)
+                .end(rejectedBookingEndDate)
+                .build();
+        BookingDto rejectedBookingDto = bookingService.create(booker.getId(), rejectedBookingShortDto);
+        rejectedBookingDto = bookingService.update(owner.getId(), rejectedBookingDto.getId(), false);
+
         Collection<BookingDto> expectedBookingDtos = List.of(
                 BookingDto.builder()
-                        .id(1L)
+                        .id(approvedBookingDto.getId())
                         .start(approvedBookingStartDate)
                         .end(approvedBookingEndDate)
                         .status(BookingStatus.APPROVED.toString())
-                        .booker(booker)
+                        .booker(bookerDto)
                         .item(itemShortDto)
                         .build(),
                 BookingDto.builder()
-                        .id(2L)
+                        .id(waitingBookingDto.getId())
                         .start(waitingBookingStartDate)
                         .end(waitingBookingEndDate)
                         .status(BookingStatus.WAITING.toString())
-                        .booker(booker)
+                        .booker(bookerDto)
                         .item(itemShortDto)
                         .build(),
                 BookingDto.builder()
-                        .id(3L)
+                        .id(rejectedBookingDto.getId())
                         .start(rejectedBookingStartDate)
                         .end(rejectedBookingEndDate)
                         .status(BookingStatus.REJECTED.toString())
-                        .booker(booker)
+                        .booker(bookerDto)
                         .item(itemShortDto)
                         .build()
         );
 
-        Collection<BookingDto> actualBookingDtos = bookingService.findBookingsOwnerByState(ownerId, BookingState.ALL, 0, 10);
+        Collection<BookingDto> actualBookingDtos = bookingService.findBookingsOwnerByState(owner.getId(), BookingState.ALL, 0, 10);
 
         assertThat(actualBookingDtos, hasSize(expectedBookingDtos.size()));
         for (BookingDto actualBookingDto : actualBookingDtos) {

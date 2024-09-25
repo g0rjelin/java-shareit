@@ -1,5 +1,6 @@
 package ru.practicum.shareit.request;
 
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.shareit.client.BaseClient;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.RequestDto;
 
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class ItemRequestClient extends BaseClient {
         );
     }
 
-    public ResponseEntity<Object> addItemRequest(long userId, ItemRequestDto requestDto) {
+    public ResponseEntity<Object> addItemRequest(long userId, @Valid RequestDto requestDto) {
         return post("", userId, requestDto);
     }
 

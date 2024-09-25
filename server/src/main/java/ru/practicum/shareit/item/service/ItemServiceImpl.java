@@ -67,8 +67,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemShortDto create(Long userId, ItemShortDto newItemShortDto) {
+        User user = userRepository.getUserById(userId);
         ItemRequest itemRequest = (Objects.isNull(newItemShortDto.getRequestId())) ? null : itemRequestRepository.getItemRequestBy(newItemShortDto.getRequestId());
-        Item newItem = ItemMapper.toItem(newItemShortDto, userRepository.getUserById(userId), itemRequest);
+        Item newItem = ItemMapper.toItem(newItemShortDto, user, itemRequest);
         return ItemMapper.toItemDto(itemRepository.save(newItem));
     }
 
